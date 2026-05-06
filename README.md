@@ -36,7 +36,7 @@ vocab_size = len(uchars) + 1 # total number of unique tokens
 print(f"vocab size: {vocab_size}")
 ```
 
-## 2-L'autoguard de microGPT : une reprie simplifiée du mécanisme de l'autoguard PyTorch
+## 2-L'autoguard de microGPT : une reprise simplifiée du mécanisme de l'autoguard PyTorch
 
 *Autoguard* : c'est un mécanisme permettant à un réseau de neurones de comprendre ses erreurs et de les corriger
 
@@ -128,14 +128,55 @@ tok_emb = state_dict['wte'][token_id] # token embedding
     x = rmsnorm(x) # note: not redundant due to backward pass via the residual connection
 ```  
 
-## 4-
+## 4- Le GPT: le coeur du modèle
 
+Il prend en entrée notre vecteur X afin d'en resortir un nombre de probabilité égale au nombre de token. Chaque probabilité associé au token T correspond au pourcentage de chance que le token suivant soit le token T.
+Le GPT est constitué de 3 parties :
 
+    i-Le Transformer est constitué d'un enchaînement de 4 blocs : 
+    
+        1) RMSNorm (Root Mean Square Norm) : Il permet de mettre chaque valeur à une échelle proche de 1 pour éviter les valeurs trop basses ou trop élévée
 
+```python
+def rmsnorm(x):
+    ms = sum(xi * xi for xi in x) / len(x)
+    scale = (ms + 1e-5) ** -0.5
+    return [xi * scale for xi in x]
+```
+         2) L'attention : 
 
+         3) Le MLP (Multi-Layer Perceptron):
 
+.
+.
+.
+.
 
+## 5-Boucle d'entraînement : la phase d'apprentissage
 
+On répète un nombre arbitraire de fois (ici 1000) notre boucle afin d'entraîner notre modèle :
+
+1) On prend un prénom de notre dataset que l'on convertit en token
+
+```python
+ doc = docs[step % len(docs)]
+    tokens = [BOS] + [uchars.index(ch) for ch in doc] + [BOS]
+    n = min(block_size, len(tokens) - 1)
+```
+
+2) Prédiction du prochain token et mesure de la pertinence de la prediction
+
+```python
+keys, values = [[] for _ in range(n_layer)], [[] for _ in range(n_layer)]
+    losses = []
+    for pos_id in range(n):
+        token_id, target_id = tokens[pos_id], tokens[pos_id + 1]
+        logits = gpt(token_id, pos_id, keys, values)
+        probs = softmax(logits)
+        loss_t = -probs[target_id].log()
+        losses.append(loss_t)
+    loss = (1 / n) * sum(losses) # final average loss over the document sequence. May yours be low.
+```
 
 
 

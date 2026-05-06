@@ -104,14 +104,31 @@ L'objectif est donc de créer un vecteur de dimension 16 pour être exploité pa
 A titre de comparaison, pour le modèle GPT-2-small la dimension est de 768 car le dataset correspond à internet tout entier,
 pour le modèle GPT-3 la dimension est de 12 288 car le dataset correspond à internet x 10,)
 
-  i- WTE : 
+  i- WTE ( Word Token Embedding) : Transforme l'id du token en vecteur de dimension 16
 
-  ii-
+  ii- WPE (Word Position Embedding) : Transforme l'id de la position du token en vecteur de dimension 16
 
-  
+```python
+# Initialize the parameters, to store the knowledge of the model
+n_layer = 1     # depth of the transformer neural network (number of layers)
+n_embd = 16    # width of the network (embedding dimension)
+block_size = 16 # maximum context length of the attention window (note: the longest name is 15 characters)
+n_head = 4      # number of attention heads
+head_dim = n_embd // n_head # derived dimension of each head
+matrix = lambda nout, nin, std=0.08: [[Value(random.gauss(0, std)) for _ in range(nin)] for _ in range(nout)]    # Initialisation de la matrice avec les poids non entraînés 
+state_dict = {'wte': matrix(vocab_size, n_embd), 'wpe': matrix(block_size, n_embd), 'lm_head': matrix(vocab_size, n_embd)}
+```
 
+Enfin on somme les deux vecteurs pour obtenir un vecteur X contenant les deux informations.
 
+```python
+tok_emb = state_dict['wte'][token_id] # token embedding
+    pos_emb = state_dict['wpe'][pos_id] # position embedding
+    x = [t + p for t, p in zip(tok_emb, pos_emb)] # joint token and position embedding
+    x = rmsnorm(x) # note: not redundant due to backward pass via the residual connection
+```  
 
+## 4-
 
 
 

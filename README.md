@@ -131,11 +131,11 @@ tok_emb = state_dict['wte'][token_id] # token embedding
 ## 4- Le GPT: le coeur du modèle
 
 Il prend en entrée notre vecteur X afin d'en resortir un nombre de probabilité égale au nombre de token. Chaque probabilité associé au token T correspond au pourcentage de chance que le token suivant soit le token T.
-Le GPT est constitué de 3 parties :
+Le GPT est constitué de 2 parties :
 
-    i-Le Transformer est constitué d'un enchaînement de 4 blocs : 
+i-Le Transformer est constitué d'un enchaînement de 4 blocs et de 2 connexions residuelles: 
     
-        1) RMSNorm (Root Mean Square Norm) : Il permet de mettre chaque valeur à une échelle proche de 1 pour éviter les valeurs trop basses ou trop élévée
+1) RMSNorm (Root Mean Square Norm) : Il permet de mettre chaque valeur à une échelle proche de 1 pour éviter les valeurs trop basses ou trop élévée
 
 ```python
 def rmsnorm(x):
@@ -143,18 +143,67 @@ def rmsnorm(x):
     scale = (ms + 1e-5) ** -0.5
     return [xi * scale for xi in x]
 ```
-         2) L'attention : 
+2) L'attention : Se base sur trois variables : q (la requête), k (la clé), v (la valeur). D'abord on effectue le produit scalaire entre Q (du token actuel) et K (des tokens passés). Le résultat obtenu est un score qui plus il est élevé, plus ce token est pertinent. Ensuite on le normalise en pourcentage avec softmax(). Enfin on multiplie les poids de softmax() par les Valeurs et on ajoute le résultat à notre token pour qu'il enregistre ce que les tokens précédent lui ont "appris".
 
-         3) Le MLP (Multi-Layer Perceptron):
+         ```python
+        for li in range(n_layer):
+        # 1) Multi-head Attention block
+        x_residual = x
+        x = rmsnorm(x)
+        q = linear(x, state_dict[f'layer{li}.attn_wq'])
+        k = linear(x, state_dict[f'layer{li}.attn_wk'])
+        v = linear(x, state_dict[f'layer{li}.attn_wv'])
+        keys[li].append(k)
+        values[li].append(v)
+        x_attn = []
+        for h in range(n_head):
+            hs = h * head_dim
+            q_h = q[hs:hs+head_dim]
+            k_h = [ki[hs:hs+head_dim] for ki in keys[li]]
+            v_h = [vi[hs:hs+head_dim] for vi in values[li]]
+            attn_logits = [sum(q_h[j] * k_h[t][j] for j in range(head_dim)) / head_dim**0.5 for t in range(len(k_h))] 
+            attn_weights = softmax(attn_logits)
+            head_out = [sum(attn_weights[t] * v_h[t][j] for t in range(len(v_h))) for j in range(head_dim)]
+            x_attn.extend(head_out)
+        x = linear(x_attn, state_dict[f'layer{li}.attn_wo'])
+         ```
+On effectue ensuite une connexion résiduelle pour additioner le token original et le résultat de l'attention.
 
-.
-.
-.
-.
+```python
+x = [a + b for a, b in zip(x, x_residual)]
+```
+
+4) Une autre utilisation de RMSNorm pour remettre à l'échelle
+   
+5) Le MLP (Multi-Layer Perceptron): Après avoir obtenu de nombreuses informations d'apprentissage via l'attention, le MLP va permettre de les transformer en des données exploitables. Pour ce faire on agrandit les dimensions avec la fonction *.mlp_fc1* de notre vecteur (ici on passe de 16 à 64) puis on utilise la fonction *.relu()* pour mettre à 0 toutes les valeurs négatives de notre vecteur, enfin on repasse en dimension 16 avec la fonction *.mlp_fc2*. La fonction relu permet ici d'obtenir un modèle non-linéaire et non simplifié.
+
+```python
+x_residual = x
+        x = rmsnorm(x)
+        x = linear(x, state_dict[f'layer{li}.mlp_fc1'])
+        x = [xi.relu() for xi in x]
+        x = linear(x, state_dict[f'layer{li}.mlp_fc2'])
+```
+On effectue ensuite une connexion résiduelle pour additioner le token avant application du MLP et le résultat du MLP.
+```python
+x = [a + b for a, b in zip(x, x_residual)]
+```
+ii- Génération des probabilités : 
+
+Pour terminer on va générer nos probabilités d'obtenir chaque charactère après le passage dans le transformer 
+
+```python
+logits = linear(x, state_dict['lm_head'])
+return logits
+```
+
+## Calcul perte + gradient
+
+## Adam
 
 ## 5-Boucle d'entraînement : la phase d'apprentissage
 
-On répète un nombre arbitraire de fois (ici 1000) notre boucle afin d'entraîner notre modèle :
+On crée une boucle qui répète un nombre arbitraire de fois (ici 1000) les étapes précédentes afin d'entraîner notre modèle :
 
 1) On prend un prénom de notre dataset que l'on convertit en token
 

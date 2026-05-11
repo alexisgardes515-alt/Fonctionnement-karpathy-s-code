@@ -197,9 +197,12 @@ logits = linear(x, state_dict['lm_head'])
 return logits
 ```
 
-## Calcul perte + gradient
 
-## Adam
+
+
+
+
+
 
 ## 5-Boucle d'entraînement : la phase d'apprentissage
 
@@ -213,7 +216,7 @@ On crée une boucle qui répète un nombre arbitraire de fois (ici 1000) les ét
     n = min(block_size, len(tokens) - 1)
 ```
 
-2) Prédiction du prochain token et mesure de la pertinence de la prediction
+2) Prédiction du prochain token et mesure de la pertinance des probabilités (placée dans une variable appelée **loss** ). Plus la perte est élevée et moins les probabilités seront pertinantes.
 
 ```python
 keys, values = [[] for _ in range(n_layer)], [[] for _ in range(n_layer)]
@@ -227,6 +230,17 @@ keys, values = [[] for _ in range(n_layer)], [[] for _ in range(n_layer)]
     loss = (1 / n) * sum(losses) # final average loss over the document sequence. May yours be low.
 ```
 
+3) On applique ensuite le *backward()* pass de notre autoguard afin de **calculer le gradient** des calculs enregistrés depuis le début du proccesus.
+
+```python
+loss.backward()
+```
+
+4) Mise à jour des poids avec l'optimisation **Adam** (Adaptative Moment Estimation ):
+
+Adam est une méthode d'optimisation se basant sur l'ajout de 2 variables pour tracer une moyenne pondérée des gradients du *backwardpass* où les gradients les plus récents comptent plus que les anciens.
+Le premier est le momentum (m): il permet l'accélaration (resp. décélération) de la vitesse d'apprentissage lorsque les gradients sont dans la même direction (resp. dans des directions opposées), car cela signifie que les paramètres sont cohérents (resp. incohérent) entre eux.
+Le deuxième est l'adaptation du taux d'apprentissage (v): il permet d'adapter la vitesse d'apprentissage en fonction de la valeur du gradient: plus un gradient est grand, plus le taux d'apprentissage diminue et inversemment.
 ## 6-L'Inférence : la génération des nouveaux prénoms 
 
 C'est l'étape de l'obtention des résultats. Pour former un nouveau prénom le script procède de la manière suivante: On prend notre **token de départ** (le BOS), on calcule à l'aide du transformer les différentes **probabilités** pour savoir quelle lettre a le plus de chance de venir après, puis on l'**ajoute à notre prénom**.

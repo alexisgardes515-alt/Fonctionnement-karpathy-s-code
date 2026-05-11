@@ -12,8 +12,6 @@ import math     # math.log, math.exp
 import random   # random.seed, random.choices, random.gauss, random.shuffle
 random.seed(42) # Let there be order among chaos
 
-
-
 # Let there be a Dataset `docs`: list[str] of documents (e.g. a list of names)
 if not os.path.exists('input.txt'):
     import urllib.request
@@ -36,11 +34,11 @@ vocab_size = len(uchars) + 1 # total number of unique tokens
 print(f"vocab size: {vocab_size}")
 ```
 
-## 2-L'autoguard de microGPT : une reprise simplifiée du mécanisme de l'autoguard PyTorch
+## 2-L'autograd de microGPT : une reprise simplifiée du mécanisme de l'autograd PyTorch
 
-*Autoguard* : c'est un mécanisme permettant à un réseau de neurones de comprendre ses erreurs et de les corriger
+*Autograd* : c'est un mécanisme permettant à un réseau de neurones de comprendre ses erreurs et de les corriger
 
-Les étapes de **l'Autoguard** :
+Les étapes de **l'Autograd** :
 
   i-*Forward pass* (l'Aller) :
   Cette étape commence dès le départ et permet d'enregistrer chaque opération dans un graphe de calcul.
@@ -108,6 +106,8 @@ pour le modèle GPT-3 la dimension est de 12 288 car le dataset correspond à in
 
   ii- WPE (Word Position Embedding) : Transforme l'id de la position du token en vecteur de dimension 16
 
+WTE et WPE sont des matrices de poids. Un poids c'est ce qui va permettre de donner plus ou moins d'importance à un paramètre. L'utilisation d'une matrice de poids permet donc d'accocrder un intérêt différents à chacune des composante de notre vecteur. Chaque poids est initialisé aléatoirement et sera ajustés pendant l'entrâinement.
+
 ```python
 # Initialize the parameters, to store the knowledge of the model
 n_layer = 1     # depth of the transformer neural network (number of layers)
@@ -173,9 +173,9 @@ On effectue ensuite une connexion résiduelle pour additioner le token original 
 x = [a + b for a, b in zip(x, x_residual)]
 ```
 
-4) Une autre utilisation de RMSNorm pour remettre à l'échelle
+3) Une autre utilisation de RMSNorm pour remettre à l'échelle
    
-5) Le MLP (Multi-Layer Perceptron): Après avoir obtenu de nombreuses informations d'apprentissage via l'attention, le MLP va permettre de les transformer en des données exploitables. Pour ce faire on agrandit les dimensions avec la fonction *.mlp_fc1* de notre vecteur (ici on passe de 16 à 64) puis on utilise la fonction *.relu()* pour mettre à 0 toutes les valeurs négatives de notre vecteur, enfin on repasse en dimension 16 avec la fonction *.mlp_fc2*. La fonction relu permet ici d'obtenir un modèle non-linéaire et non simplifié.
+4) Le MLP (Multi-Layer Perceptron): Après avoir obtenu de nombreuses informations d'apprentissage via l'attention, le MLP va permettre de les transformer en des données exploitables. Pour ce faire on agrandit les dimensions avec la fonction *.mlp_fc1* de notre vecteur (ici on passe de 16 à 64) puis on utilise la fonction *.relu()* pour mettre à 0 toutes les valeurs négatives de notre vecteur, enfin on repasse en dimension 16 avec la fonction *.mlp_fc2*. La fonction relu permet ici d'obtenir un modèle non-linéaire et non simplifié.
 
 ```python
 x_residual = x
@@ -190,20 +190,12 @@ x = [a + b for a, b in zip(x, x_residual)]
 ```
 ii- Génération des probabilités : 
 
-Pour terminer on va générer nos probabilités d'obtenir chaque charactère après le passage dans le transformer 
+Pour terminer on va générer nos probabilités d'obtenir chaque charactère après le passage dans le transformer.Pour ce faire on utilise la matrice de pods lm_head crée au départ afin d'accorder plus ou moins d'importance à nos probabilités en fonction de leurs pertinence (leur *loss*)
 
 ```python
 logits = linear(x, state_dict['lm_head'])
 return logits
 ```
-
-
-
-
-
-
-
-
 ## 5-Boucle d'entraînement : la phase d'apprentissage
 
 On crée une boucle qui répète un nombre arbitraire de fois (ici 1000) les étapes précédentes afin d'entraîner notre modèle :
@@ -230,7 +222,7 @@ keys, values = [[] for _ in range(n_layer)], [[] for _ in range(n_layer)]
     loss = (1 / n) * sum(losses) # final average loss over the document sequence. May yours be low.
 ```
 
-3) On applique ensuite le *backward()* pass de notre autoguard afin de **calculer le gradient** des calculs enregistrés depuis le début du proccesus.
+3) On applique ensuite le *backward()* pass de notre autograd afin de **calculer le gradient** des calculs enregistrés depuis le début du proccesus.
 
 ```python
 loss.backward()
@@ -259,9 +251,10 @@ Le deuxième est l'adaptation du taux d'apprentissage (v): il permet d'adapter l
 C'est l'étape de l'obtention des résultats. Pour former un nouveau prénom le script procède de la manière suivante: On prend notre **token de départ** (le BOS), on calcule à l'aide du transformer les différentes **probabilités** pour savoir quelle lettre a le plus de chance de venir après, puis on l'**ajoute à notre prénom**.
 
 On répète la boucle **probabilités** -> **ajout de lettre** jusqu'à retomber sur le token BOS, symbolisant le début d'un nouveau prénom
+Pour générer des prénoms, le paramètre *temperature* sert ici à gérer le taux de créativité des prénoms générés. Plus ce paramètre est proche de 0, plus les prénoms vont se ressembler. Plus le paramètre sera grand, plus l'algorithme prend des libertés sur le choix de la lettre suivant en prenant de moins en moins en compte les probabilités (*probabilité d'un token*= softmax(*valeur en sortie du gpt*/ *température*)
 
 ```python
-temperature = 0.5 # in (0, 1], control the "creativity" of generated text, low to high
+temperature = 0.5
 print("\n--- inference (new, hallucinated names) ---")
 for sample_idx in range(20):
     keys, values = [[] for _ in range(n_layer)], [[] for _ in range(n_layer)]
@@ -276,29 +269,3 @@ for sample_idx in range(20):
         sample.append(uchars[token_id])
     print(f"sample {sample_idx+1:2d}: {''.join(sample)}")
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

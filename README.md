@@ -241,6 +241,19 @@ loss.backward()
 Adam est une méthode d'optimisation se basant sur l'ajout de 2 variables pour tracer une moyenne pondérée des gradients du *backwardpass* où les gradients les plus récents comptent plus que les anciens.
 Le premier est le momentum (m): il permet l'accélaration (resp. décélération) de la vitesse d'apprentissage lorsque les gradients sont dans la même direction (resp. dans des directions opposées), car cela signifie que les paramètres sont cohérents (resp. incohérent) entre eux.
 Le deuxième est l'adaptation du taux d'apprentissage (v): il permet d'adapter la vitesse d'apprentissage en fonction de la valeur du gradient: plus un gradient est grand, plus le taux d'apprentissage diminue et inversemment.
+
+```python
+# Adam optimizer update: update the model parameters based on the corresponding gradients
+    lr_t = learning_rate * (1 - step / num_steps) # linear learning rate decay
+    for i, p in enumerate(params):
+        m[i] = beta1 * m[i] + (1 - beta1) * p.grad
+        v[i] = beta2 * v[i] + (1 - beta2) * p.grad ** 2
+        m_hat = m[i] / (1 - beta1 ** (step + 1))
+        v_hat = v[i] / (1 - beta2 ** (step + 1))
+        p.data -= lr_t * m_hat / (v_hat ** 0.5 + eps_adam)
+        p.grad = 0
+```
+
 ## 6-L'Inférence : la génération des nouveaux prénoms 
 
 C'est l'étape de l'obtention des résultats. Pour former un nouveau prénom le script procède de la manière suivante: On prend notre **token de départ** (le BOS), on calcule à l'aide du transformer les différentes **probabilités** pour savoir quelle lettre a le plus de chance de venir après, puis on l'**ajoute à notre prénom**.

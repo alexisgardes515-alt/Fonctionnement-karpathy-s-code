@@ -175,7 +175,7 @@ x = [a + b for a, b in zip(x, x_residual)]
 
 3) Une autre utilisation de RMSNorm pour remettre à l'échelle
    
-4) Le MLP (Multi-Layer Perceptron): Après avoir obtenu de nombreuses informations d'apprentissage via l'attention, le MLP va permettre de les transformer en des données exploitables. Pour ce faire on agrandit les dimensions avec la fonction *.mlp_fc1* de notre vecteur (ici on passe de 16 à 64) puis on utilise la fonction *.relu()* pour mettre à 0 toutes les valeurs négatives de notre vecteur, enfin on repasse en dimension 16 avec la fonction *.mlp_fc2*. La fonction relu permet ici d'obtenir un modèle non-linéaire et non simplifié.
+4) Le MLP (Multi-Layer Perceptron): Après avoir obtenu de nombreuses informations d'apprentissage via l'attention, le MLP va permettre de les transformer en des données exploitables. Pour ce faire on agrandit les dimensions avec la fonction *.mlp_fc1* de notre vecteur (ici on passe de 16 à 64) puis on utilise la fonction *.relu()* (relu(x) = max(0,x) )pour mettre à 0 toutes les valeurs négatives de notre vecteur, enfin on repasse en dimension 16 avec la fonction *.mlp_fc2*. La fonction *.relu()* (comme n'importe quelle autre fonction non linéaire) permet d'empécher l'obtention d'une fonction linéaire, qui ne serait pas assez complexe pour notre modèle, (ici Karpathy utilise *relu* car c'est la fonction non-linéaire la plus simple possible). 
 
 ```python
 x_residual = x
@@ -190,7 +190,7 @@ x = [a + b for a, b in zip(x, x_residual)]
 ```
 ii- Génération des probabilités : 
 
-Pour terminer on va générer nos probabilités d'obtenir chaque charactère après le passage dans le transformer.Pour ce faire on utilise la matrice de pods lm_head crée au départ afin d'accorder plus ou moins d'importance à nos probabilités en fonction de leurs pertinence (leur *loss*)
+Pour terminer on va générer nos probabilités d'obtenir chaque charactère après le passage dans le transformer. Pour ce faire on effectue un produit matriciel entre la de poids lm_head crée au départ et notre vecteur X après passage dans le transformer
 
 ```python
 logits = linear(x, state_dict['lm_head'])

@@ -1,7 +1,7 @@
 # Fonctionnement du code microGPT de Andrej Karpathy 
 
 L'objectif de ce code est de créer, à partir d'une base de prénoms, de nouveaux prénoms innexistants.
-Pour cela A.Karpathy a écrit un code en python pur de seulement **~200 lignes** à l'aide des bibliothèques de bases de python.
+Pour cela A.Karpathy, en se basant sur une architecture GPT (Generative Pre-trained Transformer), a écrit un code en python pur de seulement **~200 lignes** à l'aide des bibliothèques de bases de python.
 Ce code se décompose en **6 parties** :
 
 ## 0-Importation des bibliothèques et du dataset (depuis github)
@@ -178,6 +178,28 @@ keys, values = [[] for _ in range(n_layer)], [[] for _ in range(n_layer)]
     loss = (1 / n) * sum(losses) # final average loss over the document sequence. May yours be low.
 ```
 
+## 6-L'Inférence : la génération des nouveaux prénoms 
+
+C'est l'étape de l'obtention des résultats. Pour former un nouveau prénom le script procède de la manière suivante: On prend notre **token de départ** (le BOS), on calcule à l'aide du transformer les différentes **probabilités** pour savoir quelle lettre a le plus de chance de venir après, puis on l'**ajoute à notre prénom**.
+
+On répète la boucle **probabilités** -> **ajout de lettre** jusqu'à retomber sur le token BOS, symbolisant le début d'un nouveau prénom
+
+```python
+temperature = 0.5 # in (0, 1], control the "creativity" of generated text, low to high
+print("\n--- inference (new, hallucinated names) ---")
+for sample_idx in range(20):
+    keys, values = [[] for _ in range(n_layer)], [[] for _ in range(n_layer)]
+    token_id = BOS
+    sample = []
+    for pos_id in range(block_size):
+        logits = gpt(token_id, pos_id, keys, values)
+        probs = softmax([l / temperature for l in logits])
+        token_id = random.choices(range(vocab_size), weights=[p.data for p in probs])[0]
+        if token_id == BOS:
+            break
+        sample.append(uchars[token_id])
+    print(f"sample {sample_idx+1:2d}: {''.join(sample)}")
+```
 
 
 

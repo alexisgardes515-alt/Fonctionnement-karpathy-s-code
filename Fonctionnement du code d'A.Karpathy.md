@@ -189,7 +189,7 @@ x = [a + b for a, b in zip(x, x_residual)]
 ```
 ii- Génération des probabilités : 
 
-Pour terminer on va générer nos probabilités d'obtenir chaque charactère après le passage dans le transformer. Pour ce faire on effectue un produit matriciel entre la de poids lm_head crée au départ et notre vecteur X après passage dans le transformer
+Pour terminer on va générer nos probabilités d'obtenir chaque caractère après le passage dans le transformer. Pour ce faire on effectue un produit matriciel entre la de poids lm_head crée au départ et notre vecteur X après passage dans le transformer
 
 ```python
 logits = linear(x, state_dict['lm_head'])

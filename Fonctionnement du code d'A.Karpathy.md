@@ -144,8 +144,7 @@ def rmsnorm(x):
     return [xi * scale for xi in x]
 ```
 2) L'attention : Se base sur trois variables : q (la requête), k (la clé), v (la valeur). D'abord on effectue le produit scalaire entre Q (du token actuel) et K (des tokens passés). Le résultat obtenu est un score qui plus il est élevé, plus ce token est pertinent. Ensuite on le normalise en pourcentage avec softmax(). Enfin on multiplie les poids de softmax() par les Valeurs et on ajoute le résultat à notre token pour qu'il enregistre ce que les tokens précédent lui ont "appris".
-
-         ```python
+ ```python
         for li in range(n_layer):
         # 1) Multi-head Attention block
         x_residual = x
@@ -166,7 +165,7 @@ def rmsnorm(x):
             head_out = [sum(attn_weights[t] * v_h[t][j] for t in range(len(v_h))) for j in range(head_dim)]
             x_attn.extend(head_out)
         x = linear(x_attn, state_dict[f'layer{li}.attn_wo'])
-         ```
+ ```
 On effectue ensuite une connexion résiduelle pour additioner le token original et le résultat de l'attention.
 
 ```python

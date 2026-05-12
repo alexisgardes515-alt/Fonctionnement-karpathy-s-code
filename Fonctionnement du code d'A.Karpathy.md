@@ -119,7 +119,7 @@ matrix = lambda nout, nin, std=0.08: [[Value(random.gauss(0, std)) for _ in rang
 state_dict = {'wte': matrix(vocab_size, n_embd), 'wpe': matrix(block_size, n_embd), 'lm_head': matrix(vocab_size, n_embd)}
 ```
 
-Enfin on somme les deux vecteurs pour obtenir un vecteur X contenant les deux informations.
+Enfin on **somme** les deux vecteurs pour obtenir un vecteur X contenant les deux informations.
 
 ```python
 tok_emb = state_dict['wte'][token_id] # token embedding

@@ -207,7 +207,7 @@ On crée une boucle qui répète un nombre arbitraire de fois (ici 1000) les ét
     n = min(block_size, len(tokens) - 1)
 ```
 
-2) Prédiction du prochain token et mesure de la pertinance des probabilités (placée dans une variable appelée **loss** ). Plus la perte est élevée et moins les probabilités seront pertinantes.
+2) Prédiction du prochain token et mesure de la pertinance des probabilités (placée dans une variable appelée de perte notée **loss** ). Plus la perte est élevée et moins les probabilités seront pertinantes.
 
 ```python
 keys, values = [[] for _ in range(n_layer)], [[] for _ in range(n_layer)]

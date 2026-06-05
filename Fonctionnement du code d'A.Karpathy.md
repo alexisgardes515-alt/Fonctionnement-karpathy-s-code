@@ -44,7 +44,7 @@ Les étapes de **l'Autograd** :
   Cette étape commence dès le départ et permet d'enregistrer chaque opération dans un graphe de calcul.
 
   ii- *Backward pass* (le Retour) : 
-  Cette étape s'exécute après le transformer et permet de remonter le graphe pour calculer le gradient de chaque poids (avec    la règle de la chaîne).
+  Cette étape s'exécute après le transformer et permet de remonter le graphe pour calculer le gradient de chaque poids (avec la règle de la chaîne).
 
 ```python
 # Let there be Autograd to recursively apply the chain rule through a computation graph
@@ -106,7 +106,7 @@ pour le modèle GPT-3 la dimension est de 12 288 car le dataset correspond à in
 
   ii- WPE (Word Position Embedding) : Transforme l'id de la position du token en vecteur de dimension 16
 
-WTE et WPE sont des matrices de poids. Un poids c'est ce qui va permettre de donner plus ou moins d'importance à un paramètre. L'utilisation d'une matrice de poids permet donc d'accocrder un intérêt différents à chacune des composante de notre vecteur. Chaque poids est initialisé aléatoirement et sera ajustés pendant l'entrâinement.
+WTE et WPE sont des matrices de poids. Un poids c'est ce qui va permettre de donner plus ou moins d'importance à un paramètre. L'utilisation d'une matrice de poids permet donc d'accocrder un intérêt différent à chacune des composantes de notre vecteur. Chaque poids est initialisé aléatoirement et sera ajusté pendant l'entraînement.
 
 ```python
 # Initialize the parameters, to store the knowledge of the model
@@ -115,7 +115,7 @@ n_embd = 16    # width of the network (embedding dimension)
 block_size = 16 # maximum context length of the attention window (note: the longest name is 15 characters)
 n_head = 4      # number of attention heads
 head_dim = n_embd // n_head # derived dimension of each head
-matrix = lambda nout, nin, std=0.08: [[Value(random.gauss(0, std)) for _ in range(nin)] for _ in range(nout)]    # Initialisation de la matrice avec les poids non entraînés 
+matrix = lambda nout, nin, std=0.08: [[Value(random.gauss(0, std)) for _ in range(nin)] for _ in range(nout)]   
 state_dict = {'wte': matrix(vocab_size, n_embd), 'wpe': matrix(block_size, n_embd), 'lm_head': matrix(vocab_size, n_embd)}
 ```
 
@@ -135,7 +135,7 @@ Le GPT est constitué de 2 parties :
 
 i-Le Transformer est constitué d'un enchaînement de 4 blocs et de 2 connexions residuelles: 
     
-1) RMSNorm (Root Mean Square Norm) : Il permet de mettre chaque valeur à une échelle proche de 1 pour éviter les valeurs trop basses ou trop élévée
+1) RMSNorm (Root Mean Square Norm) : Il permet de mettre chaque valeur à une échelle proche de 1 pour éviter les valeurs trop basses ou trop élévées
 
 ```python
 def rmsnorm(x):
